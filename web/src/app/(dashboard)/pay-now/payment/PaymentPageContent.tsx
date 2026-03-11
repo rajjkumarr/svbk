@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-client";
 import type { StudentFeeRow, TermFeeItem } from "@/features/students/types";
-import { getStudentByAdmission } from "@/features/students/services/students.service";
+import { createOrder, getStudentByAdmission } from "@/features/students/services/students.service";
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -17,9 +17,11 @@ export function PaymentPageContent() {
   const admissionNumber = params.get("admissionNumber") ?? "";
   const academicYear = params.get("academicYear") ?? "";
   const termName = params.get("term") ?? "";
+  const currency="INR"
 
   const [student, setStudent] = useState<StudentFeeRow | null>(null);
   const [fee, setFee] = useState<TermFeeItem | null>(null);
+  console.log(fee,"fee1111",student);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
@@ -50,11 +52,80 @@ export function PaymentPageContent() {
   }, [admissionNumber, academicYear, termName]);
 
   const handlePay = async () => {
-    setPaying(true);
-    // TODO: call payment API
-    await new Promise((r) => setTimeout(r, 1500));
-    setPaying(false);
-    setSuccess(true);
+    const order = await createOrder(fee?.amount ?? 0,admissionNumber,academicYear,termName,currency);
+    console.log(order,"order1111");
+    const paymentDetails:any = student?.termFees[termName];
+    console.log(paymentDetails,"paymentDetails1111");
+    const options = {
+      // key: "rzp_test_4ooZqGtgtcJpfl",
+      // key_secret: "PHqqPRAeJ2AVlkwq0nVIP0rI",
+     
+      key: 'rzp_test_sqNxwNoHPVS5c0',
+      key_secret: 'CUOhlURnP5abO40zUFZ30mOB',
+
+      // key: 'rzp_live_zdLen5i4S2GX08',
+      // key_secret: 'ek6dSNO2VvHbKpuikxKYK70a',
+
+      // key: razorpayKey,
+      // key_secret: razorpaySecret,
+
+      amount: ((paymentDetails.discountedAmount && paymentDetails.discountedAmount !== "NA" && paymentDetails.discountedAmount !== "Pending" && paymentDetails.discountedAmount !== "Rejected") ? paymentDetails.discountedAmount : paymentDetails.amount) * 100, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+      order_id: paymentDetails.orderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+      currency: "INR",
+      name: "SVBK",
+      // description: termName,
+      handler: function (response:any) { 
+          console.log("success response of handler in razorpay",response)
+          // setShouldNavigate(true)
+          // dispatch(apiUpdateOrderDetails({
+          //     signature: response.razorpay_signature,
+          //     ADMISSION: payeeDetails.admissionNumber,
+          //     receipt: payeeDetails.receipt,
+          //     paymentStatus: "Paid",
+          //     transactionId: response.razorpay_payment_id,
+          //     orderId: theArray.orderId,
+          //     paidAmount: ((theArray.discountedAmount && theArray.discountedAmount !== "NA" && theArray.discountedAmount !== "Pending" && theArray.discountedAmount !== "Rejected") ? theArray.discountedAmount : theArray.amount)
+          // }))
+
+          // dispatch(apiSaveAuditLogs({
+          //     orderId: response.razorpay_order_id,
+          //     transactionId: response.razorpay_payment_id,
+          //     name: payeeDetails.name,
+          //     email: payeeDetails.email,
+          //     admissionNumber: payeeDetails.admissionNumber,
+          //     term: payeeDetails.receipt,
+          //     branch:adminDetails?.data?.branch
+          // }))
+          
+      },
+      modal: {
+          "ondismiss": function () {
+              // navigate("/admission")
+              // dispatch(resetCreateOrderState())
+              // dispatch(resetGetStudentDetailsByAdmissionDetailsState())
+          }
+      },
+      prefill: {
+          // name: redirectPage !== "native"? "":payeeDetails.name,
+          // email: redirectPage !== "native"? "":payeeDetails.email,
+          // contact: redirectPage !== "native"? "":payeeDetails.phoneNumber,
+      },
+      // timeout: 480,
+      // retry:{
+      //     enabled: false
+      // }
+  };
+  const _window:any = window;
+  const paymentObject:any = new _window.Razorpay(options);
+  paymentObject.open();
+
+
+
+    // setPaying(true);
+    // // TODO: call payment API
+    // await new Promise((r) => setTimeout(r, 1500));
+    // setPaying(false);
+    // setSuccess(true);
   };
 
   const total = fee ? fee.amount + fee.penaltyAmount : 0;
@@ -186,12 +257,12 @@ export function PaymentPageContent() {
                       {formatCurrency(fee.amount)}
                     </td>
                   </tr>
-                  <tr style={{ borderBottom: "1px solid var(--app-divider)" }}>
+                  {/* <tr style={{ borderBottom: "1px solid var(--app-divider)" }}>
                     <td className="px-5 py-3 text-sm" style={{ color: "var(--app-text-secondary)" }}>Penalty Amount</td>
                     <td className="px-5 py-3 text-right text-sm font-medium" style={{ color: fee.penaltyAmount > 0 ? "var(--app-danger)" : "var(--app-text-primary)" }}>
                       {formatCurrency(fee.penaltyAmount)}
                     </td>
-                  </tr>
+                  </tr> */}
                   {fee.paidAmount > 0 && (
                     <tr style={{ borderBottom: "1px solid var(--app-divider)" }}>
                       <td className="px-5 py-3 text-sm" style={{ color: "var(--app-text-secondary)" }}>Already Paid</td>
@@ -207,7 +278,7 @@ export function PaymentPageContent() {
                       Total Payable
                     </td>
                     <td className="px-5 py-4 text-right text-lg font-bold" style={{ color: "var(--app-brand)" }}>
-                      {formatCurrency(Math.max(total - fee.paidAmount, 0))}
+                      {formatCurrency(fee.amount)}
                     </td>
                   </tr>
                 </tfoot>
@@ -235,12 +306,12 @@ export function PaymentPageContent() {
                 <span style={{ color: "var(--app-text-secondary)" }}>Fee</span>
                 <span className="font-medium" style={{ color: "var(--app-text-primary)" }}>{fee ? formatCurrency(fee.amount) : "—"}</span>
               </div>
-              {fee && fee.penaltyAmount > 0 && (
+              {/* {fee && fee.penaltyAmount > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span style={{ color: "var(--app-text-secondary)" }}>Penalty</span>
                   <span className="font-medium" style={{ color: "var(--app-danger)" }}>{formatCurrency(fee.penaltyAmount)}</span>
                 </div>
-              )}
+              )} */}
               {fee && fee.paidAmount > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span style={{ color: "var(--app-text-secondary)" }}>Already Paid</span>
@@ -251,7 +322,7 @@ export function PaymentPageContent() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold" style={{ color: "var(--app-text-primary)" }}>Total</span>
                   <span className="text-xl font-bold" style={{ color: "var(--app-brand)" }}>
-                    {fee ? formatCurrency(Math.max(total - fee.paidAmount, 0)) : "—"}
+                    {fee ? formatCurrency(fee.amount) : "—"}
                   </span>
                 </div>
               </div>
@@ -277,7 +348,7 @@ export function PaymentPageContent() {
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Pay {fee ? formatCurrency(Math.max(total - fee.paidAmount, 0)) : ""}
+                  Pay {fee ? formatCurrency(fee.amount) : ""}
                 </>
               )}
             </button>

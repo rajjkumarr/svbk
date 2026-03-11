@@ -3,30 +3,27 @@
 import { useUi } from "@/context/ui-context";
 
 export function Navbar() {
-  const { toggleSidebar, sidebarOpen, sidebarCollapsed } = useUi();
-
-  const marginClass = sidebarOpen ? "ml-72" : "ml-0";
-  const desktopMarginClass = sidebarCollapsed ? "md:ml-20" : "md:ml-72";
+  const { toggleSidebar } = useUi();
 
   return (
     <header
-      className={`sticky top-0 z-40 flex h-16 w-80% items-center gap-6 border-b px-6 md:px-8 transition-[margin] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${marginClass} ${desktopMarginClass}`}
+      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-4 md:px-8 transition-[margin] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
       style={{
         backgroundColor: "var(--app-navbar-bg)",
         borderColor: "var(--app-navbar-border)",
       }}
     >
-      {/* <button
+      <button
         type="button"
         onClick={toggleSidebar}
         className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--app-nav-hover-bg)]"
-        style={{ color: "var(--app-nav-active-text)" }}
+        style={{ color: "var(--app-nav-icon)" }}
         aria-label="Open menu"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
-      </button> */}
+      </button>
 
       <div className="flex flex-1 items-center gap-6">
         <div className="relative hidden flex-1 max-w-xl sm:block">
@@ -79,9 +76,8 @@ export function Navbar() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </button>
-        <div className="ml-2 flex items-center gap-4 border-l pl-4" style={{ borderColor: "var(--app-divider)" }}>
-         
-          <div className="hidden flex-col sm:flex">
+        <div className="ml-2 hidden items-center gap-4 border-l pl-4 md:flex" style={{ borderColor: "var(--app-divider)" }}>
+          <div className="flex flex-col">
             <span className="text-base font-medium" style={{ color: "var(--app-text-primary)" }}>
               Admin User
             </span>

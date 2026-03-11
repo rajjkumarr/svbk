@@ -16,7 +16,6 @@ export function StudentsPageContent() {
 
   return (
     <div className="space-y-1">
-      {/* Header with tabs on the right */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold" style={{ color: "var(--app-text-primary)" }}>
           Students
@@ -47,7 +46,6 @@ export function StudentsPageContent() {
         </div>
       </div>
 
-      {/* Tab content */}
       {activeTab === "view" && <ViewPageContent />}
       {activeTab === "upload" && <UploadPageContent />}
     </div>

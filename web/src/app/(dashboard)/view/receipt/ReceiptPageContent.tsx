@@ -1,12 +1,10 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useMemo, useRef } from "react";
-import { PageHeader } from "@/components/layout";
+import { useState, useEffect, useRef } from "react";
 import { StatusBadge } from "@/components/common";
-import { useFetchStudents } from "@/features/students/hooks/useFetchStudents";
-
-const BRANCH = "hyd";
+import { getStudentByAdmission } from "@/features/students/services/students.service";
+import type { StudentFeeRow } from "@/features/students/types";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -48,18 +46,35 @@ export function ReceiptPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const receiptRef = useRef<HTMLDivElement>(null);
-  // const paymentDetails = usePaymentDetails();
 
-  const studentId = searchParams.get("studentId") ?? "";
+  const admissionNumber = searchParams.get("studentId") ?? "";
   const termName = searchParams.get("term") ?? "";
-  const academicYear = searchParams.get("ay") ?? "2026-2027";
+  const academicYear = searchParams.get("academicYear") ?? "";
 
-  const { data: rows, loading, error } = useFetchStudents(BRANCH, academicYear);
+  const [student, setStudent] = useState<StudentFeeRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const student = useMemo(
-    () => rows.find((r) => r.id === studentId) ?? null,
-    [rows, studentId]
-  );
+  useEffect(() => {
+    if (!admissionNumber || !academicYear) {
+      setError("Missing admission number or academic year.");
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const row = await getStudentByAdmission(admissionNumber, academicYear);
+        console.log(row,"row1111");
+        setStudent(row);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load student data.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [admissionNumber, academicYear]);
 
   const term = student?.termFees?.[termName] ?? null;
 
@@ -152,7 +167,8 @@ export function ReceiptPageContent() {
     );
   }
 
-  const receiptId = `REC-${student.id}-${termName.replace(/\s+/g, "")}`;
+  const receiptId = student._id;
+  console.log(receiptId,"receiptId1111",student);
 
   return (
     <div className="space-y-4">

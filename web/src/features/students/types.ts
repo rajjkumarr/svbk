@@ -8,6 +8,7 @@ export type TermFeeItem = {
 /** Term fees keyed by term name e.g. "1st Term Fee" -> { amount, paymentStatus } */
 export type StudentFeeRow = {
   id: string;
+  _id: string;
   name: string;
   class: string;
   section: string;
@@ -23,3 +24,9 @@ export type StudentFeeRow = {
 
 /** API response shape: results array replaces table rows */
 export type GetStudentsDetailsResponse = { results: StudentFeeRow[] };
+
+export type AcademicYearItem = {
+  _id: string;
+  academicYear: string;
+  isCurrentYear: boolean;
+};

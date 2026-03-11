@@ -4,7 +4,7 @@
 
 import type { StudentFeeRow, TermFeeItem } from "@/features/students/types";
 import type { GetStudentsDetailsResponse } from "@/features/students/types";
-import { getAcademicYearsApi, getStudentsDetailsByBranchApi, getStudentByAdmissionApi } from "@/features/students/api/students.api";
+import { getAcademicYearsApi, getStudentsDetailsByBranchApi, getStudentByAdmissionApi, createOrderApi } from "@/features/students/api/students.api";
 
 /** Parse API termFee array: [ { "1st Term Fee": { amount, paymentStatus } }, ... ] */
 function parseTermFees(termFee: unknown): Record<string, TermFeeItem> {
@@ -31,6 +31,7 @@ function parseTermFees(termFee: unknown): Record<string, TermFeeItem> {
 /** Map API result item to table row (handles different backend key names) */
 function mapApiResultToRow(item: Record<string, unknown>, index: number): StudentFeeRow {
   const id = String(item.id ?? item.studentId ?? index + 1);
+  const _id = String(item._id );
   const name = String(item.name ?? item.studentName ?? item.student_name ?? "");
   const classVal = String(item.class ?? item.className ?? item.class_name ?? "");
   const section = String(item.section ?? item.sectionName ?? item.section_name ?? "");
@@ -41,7 +42,7 @@ function mapApiResultToRow(item: Record<string, unknown>, index: number): Studen
   const amount = String(item.amount ?? item.feeAmount ?? "—");
   const status = (item.status === "Paid" || item.status === "Pending" ? item.status : "Pending") as "Paid" | "Pending";
   const termFees = parseTermFees(item.termFee ?? item.termFees ?? []);
-  return { id, name, class: classVal, section, rollNo, admissionNumber, phone, email, amount, status, termFees };
+  return { _id, id, name, class: classVal, section, rollNo, admissionNumber, phone, email, amount, status, termFees };
 }
 
 export async function getStudentsByBranch(
@@ -55,16 +56,23 @@ export async function getStudentsByBranch(
     : [];
 }
 
-export async function getAcademicYears(): Promise<string[]> {
+import type { AcademicYearItem } from "@/features/students/types";
+
+export async function getAcademicYears(): Promise<AcademicYearItem[]> {
   const data = await getAcademicYearsApi();
-  return data;
+  return Array.isArray(data) ? data : [];
 }
 
+export async function addPenaltyApi(academicYear: string, branch: string, term: string, amount: number): Promise<void> {
+  const data = await addPenaltyApi(academicYear, branch, term, amount);
+  return data;
+}
 export async function getStudentByAdmission(
   admissionNumber: string,
   academicYear: string
 ): Promise<StudentFeeRow> {
   const data = await getStudentByAdmissionApi(admissionNumber, academicYear);
+  console.log(data,"data1111");
   const item = (data && typeof data === "object" && "result" in data)
     ? data.result as Record<string, unknown>
     : data;
@@ -72,4 +80,9 @@ export async function getStudentByAdmission(
     throw new Error("Student not found. Please check the admission number.");
   }
   return mapApiResultToRow(item as Record<string, unknown>, 0);
+}
+
+export async function createOrder(amount: number,admission: string,academicYear: string,receipt: string,currency: string): Promise<void> {
+  const data = await createOrderApi(amount,admission,academicYear,receipt,currency);
+  return data;
 }

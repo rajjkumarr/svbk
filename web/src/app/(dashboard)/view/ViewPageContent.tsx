@@ -11,7 +11,7 @@ import {
 } from "@/components/dashboard";
 import { IconActions, StatusBadge } from "@/components/common";
 import { PageHeader } from "@/components/layout";
-import { useFetchAcademicYears, useFetchStudents } from "@/features/students/hooks/useFetchStudents";
+import { useFetchAcademicYears, useFetchStudents, useAddPenalty } from "@/features/students/hooks/useFetchStudents";
 import { downloadStudentsAsExcel } from "@/features/students/utils/exportStudentsToExcel";
 import { Modal } from "@/components/common";
 import { EditStudentForm } from "@/features/students/components/EditStudentForm";
@@ -30,7 +30,6 @@ function formatCurrency(n: number): string {
 function computeSummaryItems(rows: { termFees?: Record<string, { amount: number; paymentStatus: string }> }[]): SummaryCardItem[] {
   let paid = 0;
   let pending = 0;
-  console.log(rows,"rows")
   rows.forEach((r) => {
     if (!r.termFees) return;
     Object.values(r.termFees).forEach((t) => {
@@ -148,7 +147,8 @@ function ViewIcon() {
 
 export function ViewPageContent() {
   const [search, setSearch] = useState("");
-  const [academicYear, setAcademicYear] = useState("2026-2027");
+  const [academicYear, setAcademicYear] = useState("");
+  const [branch, setBranch] = useState("hyd");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editStudent, setEditStudent] = useState<StudentFeeRow | null>(null);
@@ -158,8 +158,16 @@ export function ViewPageContent() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
-  const { data: rows, loading, error } = useFetchStudents(BRANCH, academicYear);
   const { academicYears } = useFetchAcademicYears();
+  const { addPenalty, loading: penaltyLoading, error: penaltyError } = useAddPenalty(academicYear, BRANCH, penaltyTerm, parseFloat(penaltyAmount));
+  useEffect(() => {
+    if (academicYears.length > 0 && !academicYear) {
+      const current = academicYears.find((y) => y.isCurrentYear);
+      setAcademicYear(current ? current.academicYear : academicYears[0].academicYear);
+    }
+  }, [academicYears, academicYear]);
+
+  const { data: rows, loading, error } = useFetchStudents(BRANCH, academicYear);
 
   const termHeaders = useMemo(() => getTermHeaders(rows), [rows]);
   const sortConfigs = useMemo(() => buildSortConfigs(termHeaders), [termHeaders]);
@@ -206,6 +214,11 @@ export function ViewPageContent() {
     to: Math.min(start + PAGE_SIZE, filtered.length),
     total: filtered.length,
     label: "students",
+  };
+
+  const handleAddPenalty = () => {
+    console.log("Add penalty:", academicYear,{ term: penaltyTerm, amount: penaltyAmount,academicYear,branch:BRANCH });
+    addPenalty();
   };
 
   const pageIds = pageRows.map((r) => r.id);
@@ -283,7 +296,6 @@ export function ViewPageContent() {
         searchPlaceholder="Search students..."
         searchValue={search}
         onSearchChange={setSearch}
-        onFiltersClick={() => {}}
         filterOptions={
           <select
             value={academicYear}
@@ -291,7 +303,7 @@ export function ViewPageContent() {
             className="h-11 rounded-xl border bg-[var(--app-card-bg)] px-4 text-base outline-none transition-colors focus:ring-2 focus:ring-[var(--app-search-focus)]/20"
             style={{ borderColor: "var(--app-search-border)", color: "var(--app-text-primary)" }}
           >
-            {academicYears.map((year: any) => (
+            {academicYears.map((year) => (
               <option key={year._id} value={year.academicYear}>{year.academicYear}</option>
             ))}
           </select>
@@ -399,7 +411,7 @@ export function ViewPageContent() {
                 })}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1">
-                    <ReceiptDropdown student={row} />
+                    <ReceiptDropdown student={row} academicYear={academicYear} />
                     <IconActions
                       actions={[
                         { label: "Edit", onClick: () => setEditStudent(row), icon: <EditIcon /> },
@@ -472,6 +484,7 @@ export function ViewPageContent() {
               form="add-penalty-form"
               className="h-10 rounded-lg px-5 text-sm font-medium text-white transition-colors hover:opacity-90"
               style={{ backgroundColor: "var(--app-brand)" }}
+              onClick={handleAddPenalty}
             >
               Add Penalty
             </button>

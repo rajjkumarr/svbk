@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Modal } from "@/components/common";
 import type { StudentFeeRow } from "@/features/students/types";
 
 function ReceiptIcon({ className = "h-5 w-5" }: { className?: string }) {
@@ -14,50 +15,42 @@ function ReceiptIcon({ className = "h-5 w-5" }: { className?: string }) {
 
 export interface ReceiptDropdownProps {
   student: StudentFeeRow;
+  academicYear: string;
 }
 
-export function ReceiptDropdown({ student }: ReceiptDropdownProps) {
+export function ReceiptDropdown({ student, academicYear }: ReceiptDropdownProps) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTerm, setSelectedTerm] = useState("");
 
-  const paidTerms = Object.entries(student.termFees).filter(
-    ([, t]) => t.paymentStatus === "Paid"
-  );
+  const allTerms = Object.entries(student.termFees);
+  const paidTerms = allTerms.filter(([, t]) => t.paymentStatus === "Paid");
   const disabled = paidTerms.length === 0;
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  const handleOpen = () => {
+    setSelectedTerm(paidTerms.length > 0 ? paidTerms[0][0] : "");
+    setModalOpen(true);
+  };
 
-  const handleSelect = (termName: string) => {
-    setIsOpen(false);
+  const handleConfirm = () => {
+    if (!selectedTerm) return;
+    setModalOpen(false);
     const params = new URLSearchParams({
-      studentId: student.id,
-      term: termName,
+      studentId: student.admissionNumber,
+      term: selectedTerm,
+      academicYear,
     });
     router.push(`/view/receipt?${params.toString()}`);
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
         type="button"
         disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
-          if (paidTerms.length === 1) {
-            handleSelect(paidTerms[0][0]);
-          } else {
-            setIsOpen((prev) => !prev);
-          }
+          handleOpen();
         }}
         className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-[background-color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--app-nav-hover-bg)] disabled:opacity-30 disabled:cursor-not-allowed"
         style={{ color: disabled ? "var(--app-text-secondary)" : "var(--app-brand)" }}
@@ -67,28 +60,50 @@ export function ReceiptDropdown({ student }: ReceiptDropdownProps) {
         <ReceiptIcon />
       </button>
 
-      {isOpen && paidTerms.length > 1 && (
-        <div
-          className="absolute right-0 top-full z-50 mt-1 min-w-[160px] animate-[modal-in_0.15s_ease-out] rounded-lg border py-1 shadow-lg"
-          style={{ backgroundColor: "var(--app-card-bg)", borderColor: "var(--app-divider)" }}
-        >
-          <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--app-text-secondary)" }}>
-            Select Term
-          </p>
-          {paidTerms.map(([termName]) => (
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Select Term"
+        size="sm"
+        footer={
+          <>
             <button
-              key={termName}
               type="button"
-              onClick={(e) => { e.stopPropagation(); handleSelect(termName); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-[var(--app-nav-hover-bg)]"
-              style={{ color: "var(--app-text-primary)" }}
+              onClick={() => setModalOpen(false)}
+              className="h-10 rounded-lg border px-5 text-sm font-medium transition-colors hover:bg-[var(--app-nav-hover-bg)]"
+              style={{ borderColor: "var(--app-search-border)", color: "var(--app-text-primary)" }}
             >
-              <ReceiptIcon className="h-4 w-4 flex-shrink-0" />
-              {termName}
+              Cancel
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={!selectedTerm}
+              className="h-10 rounded-lg px-5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: "var(--app-brand)" }}
+            >
+              View Receipt
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm" style={{ color: "var(--app-text-secondary)" }}>
+            Select which term receipt to view for <strong style={{ color: "var(--app-text-primary)" }}>{student.name}</strong>
+          </p>
+          <select
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            className="h-10 w-full rounded-lg border px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-[var(--app-search-focus)]/20"
+            style={{ borderColor: "var(--app-search-border)", backgroundColor: "var(--app-card-bg)", color: "var(--app-text-primary)" }}
+          >
+            <option value="" disabled>Select term</option>
+            {paidTerms.map(([termName]) => (
+              <option key={termName} value={termName}>{termName}</option>
+            ))}
+          </select>
         </div>
-      )}
-    </div>
+      </Modal>
+    </>
   );
 }

@@ -86,7 +86,7 @@ function NavIcon({ name }: { name: string }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, setSidebarOpen, sidebarCollapsed, toggleSidebarCollapsed } = useUi();
+  const { sidebarOpen, setSidebarOpen } = useUi();
   const { logout } = useAuth();
 
   const isActive = (href: string) =>
@@ -106,10 +106,8 @@ export function Sidebar() {
       />
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-full flex-col shadow-xl ${transitionClass} ${
+        className={`fixed left-0 top-0 z-50 flex h-full w-20 md:w-72 flex-col shadow-xl ${transitionClass} ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 ${
-          sidebarCollapsed ? "w-20" : "w-72"
         } max-w-[85vw]`}
         style={{
           backgroundColor: "var(--app-sidebar-bg)",
@@ -118,29 +116,12 @@ export function Sidebar() {
         aria-label="Main navigation"
       >
         <div
-          className={`flex items-center gap-3 border-b px-2 py-4 ${transitionClass}`}
+          className="flex min-w-0 items-center justify-center md:justify-start overflow-hidden border-b px-2 py-4"
           style={{ borderColor: "var(--app-sidebar-border)" }}
         >
-          {sidebarCollapsed ? (
-            <div className="flex w-full justify-center">
-              <SidebarBrand />
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={closeSidebar}
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-[background-color,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[var(--app-nav-hover-bg)] hover:opacity-90 md:hidden"
-                style={{ color: "var(--app-nav-icon)" }}
-                aria-label="Close menu"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <SidebarBrand />
-            </>
-          )}
+          <div className="min-w-0 flex-1">
+            <SidebarBrand />
+          </div>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-4">
@@ -151,54 +132,41 @@ export function Sidebar() {
                 key={href}
                 href={href}
                 onClick={closeSidebar}
-                className={`flex items-center gap-4 rounded-xl px-2 py-3 text-base font-medium ${transitionClass} ${
-                  sidebarCollapsed ? "justify-center px-0" : "gap-4 px-4"
-                } ${active ? "" : "hover:bg-[var(--app-nav-hover-bg)]"}`}
+                className={`flex items-center justify-center md:justify-start gap-4 rounded-xl px-0 md:px-4 py-3 text-base font-medium ${transitionClass} ${active ? "" : "hover:bg-[var(--app-nav-hover-bg)]"}`}
                 style={
                   active
                     ? { backgroundColor: "#e0f2fe", color: "#1e58b4" }
                     : { color: "var(--app-sidebar-text)" }
                 }
-                title={sidebarCollapsed ? label : undefined}
+                title={label}
               >
                 <NavIcon name={icon} />
-                {!sidebarCollapsed && label}
+                <span className="hidden md:inline">{label}</span>
               </Link>
             );
           })}
         </nav>
 
         <div className="border-t px-2 py-4" style={{ borderColor: "var(--app-sidebar-border)" }}>
+          <div className="mb-3 flex items-center justify-center gap-3 rounded-xl px-2 py-2 md:hidden">
+            <div
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium text-white"
+              style={{ backgroundColor: "var(--app-brand, #0b54ab)" }}
+            >
+              A
+            </div>
+          </div>
           <button
             type="button"
-            onClick={() => { setSidebarOpen(false); toggleSidebarCollapsed(); }}
-            className={`flex w-full items-center gap-4 rounded-xl px-2 py-3 text-base font-medium ${transitionClass} hover:bg-[var(--app-nav-hover-bg)] ${
-              sidebarCollapsed ? "justify-center px-0" : "px-4"
-            }`}
-            style={{ color: "var(--app-sidebar-text)" }}
-            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            <svg className={`h-5 w-5 flex-shrink-0 ${sidebarCollapsed ? "rotate-180" : ""} ${transitionClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
-            {!sidebarCollapsed && "Collapse Sidebar"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              closeSidebar();
-              logout();
-            }}
-            className={`mt-2 flex w-full items-center gap-4 rounded-xl px-2 py-3 text-base font-medium ${transitionClass} hover:opacity-90 ${
-              sidebarCollapsed ? "justify-center px-0" : "px-4"
-            }`}
+            onClick={() => { closeSidebar(); logout(); }}
+            className={`flex w-full items-center justify-center md:justify-start gap-4 rounded-xl px-0 md:px-4 py-3 text-base font-medium ${transitionClass} hover:opacity-90`}
             style={{ color: "var(--app-danger-text)" }}
-            title={sidebarCollapsed ? "Logout" : undefined}
+            title="Logout"
           >
             <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            {!sidebarCollapsed && "Logout"}
+            <span className="hidden md:inline">Logout</span>
           </button>
         </div>
       </aside>

@@ -1,13 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-client";
-import type { StudentFeeRow } from "@/features/students/types";
+import type { StudentFeeRow, AcademicYearItem } from "@/features/students/types";
 import { getStudentByAdmission, getAcademicYears } from "@/features/students/services/students.service";
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+}
+
+function filterCurrentAndPastYear(allYears: AcademicYearItem[]): AcademicYearItem[] {
+  const currentYearObj = allYears.find((y) => y.isCurrentYear);
+  if (!currentYearObj) return allYears;
+
+  const startYear = parseInt(currentYearObj.academicYear.split("-")[0], 10);
+  const prevYearStr = `${startYear - 1}-${startYear}`;
+  const prevYearObj = allYears.find((y) => y.academicYear === prevYearStr);
+
+  const filtered: AcademicYearItem[] = [currentYearObj];
+  if (prevYearObj) filtered.push(prevYearObj);
+  return filtered;
 }
 
 export function PayNowPageContent() {
@@ -15,21 +28,23 @@ export function PayNowPageContent() {
 
   const [admissionNo, setAdmissionNo] = useState("");
   const [academicYear, setAcademicYear] = useState("");
-  console.log(academicYear,"academicYear1111");
-  const [academicYears, setAcademicYears] = useState<string[]>([]);
+  const [allYears, setAllYears] = useState<AcademicYearItem[]>([]);
   const [yearsLoading, setYearsLoading] = useState(true);
 
   const [student, setStudent] = useState<StudentFeeRow | null>(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const academicYears = useMemo(() => filterCurrentAndPastYear(allYears), [allYears]);
+
   useEffect(() => {
     (async () => {
       try {
-        const years:any = await getAcademicYears();
-        console.log(years[0].academicYear,"years1111");
-        setAcademicYears(years);
-        if (years.length > 0) setAcademicYear(years[0].academicYear);
+        const years = await getAcademicYears();
+        setAllYears(years);
+        const currentYear = years.find((y) => y.isCurrentYear);
+        if (currentYear) setAcademicYear(currentYear.academicYear);
+        else if (years.length > 0) setAcademicYear(years[0].academicYear);
       } catch {
         /* silently ignore */
       } finally {
@@ -45,7 +60,6 @@ export function PayNowPageContent() {
     setStudent(null);
     try {
       const row = await getStudentByAdmission(admissionNo.trim(), academicYear);
-      console.log(row,"row1111");
       setStudent(row);
     } catch (err) {
       setError(getApiErrorMessage(err, "Student not found. Please check the admission number."));
@@ -115,7 +129,7 @@ export function PayNowPageContent() {
               ) : academicYears.length === 0 ? (
                 <option>No years available</option>
               ) : (
-                academicYears.map((y:any) => (
+                academicYears.map((y) => (
                   <option key={y._id} value={y.academicYear}>{y.academicYear}</option>
                 ))
               )}
@@ -202,7 +216,7 @@ export function PayNowPageContent() {
             <table className="w-full">
               <thead>
                 <tr style={{ backgroundColor: "var(--app-search-bg)" }}>
-                  {["Term", "Fee Amount", "Penalty", "Total", "Status", "Action"].map((h) => (
+                  {["Term", "Fee Amount",  "Total", "Status", "Action"].map((h) => (
                     <th
                       key={h}
                       className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider"
@@ -215,7 +229,7 @@ export function PayNowPageContent() {
               </thead>
               <tbody>
                 {termEntries.map(([termName, fee]) => {
-                  const total = fee.amount + fee.penaltyAmount;
+                  const total = fee.amount;
                   const isPaid = fee.paymentStatus === "Paid";
                   return (
                     <tr
@@ -229,9 +243,9 @@ export function PayNowPageContent() {
                       <td className="px-5 py-3.5 text-sm" style={{ color: "var(--app-text-primary)" }}>
                         {formatCurrency(fee.amount)}
                       </td>
-                      <td className="px-5 py-3.5 text-sm" style={{ color: fee.penaltyAmount > 0 ? "var(--app-danger)" : "var(--app-text-secondary)" }}>
+                      {/* <td className="px-5 py-3.5 text-sm" style={{ color: fee.penaltyAmount > 0 ? "var(--app-danger)" : "var(--app-text-secondary)" }}>
                         {formatCurrency(fee.penaltyAmount)}
-                      </td>
+                      </td> */}
                       <td className="px-5 py-3.5 text-sm font-semibold" style={{ color: "var(--app-text-primary)" }}>
                         {formatCurrency(total)}
                       </td>

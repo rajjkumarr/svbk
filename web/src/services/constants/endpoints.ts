@@ -2,7 +2,8 @@
  * API endpoints by feature. Add new features (auth, user, …) here.
  */
 
-export const API_ENDPOINTS = {
+export const 
+API_ENDPOINTS = {
   auth: {
     verifyLogin: "/verifyLogin",
     logout: "/logout",
@@ -16,6 +17,8 @@ export const API_ENDPOINTS = {
     getStudentsDetailsByBranch: "/studentsDetails/getStudentsDetailsByBranch",
     getAcademicYears: "/studentsDetails/getAcademicYears",
     getStudentByAdmission: "/studentsDetails/getStudentDetailsByAdmission",
+    addPenalty: "/studentsDetails/addPenality",
+    createOrder: "/studentsDetails/create/order",
   },
   templates: {
     getTemplates: "/templates/getTemplates",
