@@ -4,7 +4,8 @@
 
 import type { StudentFeeRow, TermFeeItem } from "@/features/students/types";
 import type { GetStudentsDetailsResponse } from "@/features/students/types";
-import { getAcademicYearsApi, getStudentsDetailsByBranchApi, getStudentByAdmissionApi, createOrderApi } from "@/features/students/api/students.api";
+import { getAcademicYearsApi, getStudentsDetailsByBranchApi, getStudentByAdmissionApi, createOrderApi, checkTermDetailsApi } from "@/features/students/api/students.api";
+type UploadValidationRow = Record<string, string>;
 
 /** Parse API termFee array: [ { "1st Term Fee": { amount, paymentStatus } }, ... ] */
 function parseTermFees(termFee: unknown): Record<string, TermFeeItem> {
@@ -85,4 +86,8 @@ export async function getStudentByAdmission(
 export async function createOrder(amount: number,admission: string,academicYear: string,receipt: string,currency: string): Promise<void> {
   const data = await createOrderApi(amount,admission,academicYear,receipt,currency);
   return data;
+}
+
+export async function checkTermDetails(tableData: UploadValidationRow[], branch: string): Promise<UploadValidationRow[]> {
+  return checkTermDetailsApi({ tableData, branch });
 }

@@ -24,9 +24,3 @@ export type StudentFeeRow = {
 
 /** API response shape: results array replaces table rows */
 export type GetStudentsDetailsResponse = { results: StudentFeeRow[] };
-
-export type AcademicYearItem = {
-  _id: string;
-  academicYear: string;
-  isCurrentYear: boolean;
-};

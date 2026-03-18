@@ -2,6 +2,8 @@
  * API endpoints by feature. Add new features (auth, user, …) here.
  */
 
+// import { notification } from "@/features/notifications/service/notification.service";
+
 export const 
 API_ENDPOINTS = {
   auth: {
@@ -19,6 +21,8 @@ API_ENDPOINTS = {
     getStudentByAdmission: "/studentsDetails/getStudentDetailsByAdmission",
     addPenalty: "/studentsDetails/addPenality",
     createOrder: "/studentsDetails/create/order",
+    checkTermDetails: "/studentsDetails/checkTermDetails",
+    getAdminNotifications:"/studentsDetails/getAdminNotifications"
   },
   templates: {
     getTemplates: "/templates/getTemplates",

@@ -8,6 +8,8 @@ import {
   type PaginationInfo,
 } from "@/components/dashboard";
 import * as XLSX from "xlsx";
+import { checkTermDetails } from "@/features/students/services/students.service";
+type UploadValidationRow = Record<string, string>;
 
 const PAGE_SIZE = 10;
 
@@ -17,6 +19,8 @@ type ParsedData = {
   fileName: string;
   fileSize: number;
 };
+
+type UploadPayloadItem = UploadValidationRow;
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -56,21 +60,49 @@ export function UploadPageContent() {
   const [parseError, setParseError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [validatedRows, setValidatedRows] = useState<UploadValidationRow[] | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
+console.log(validatedRows,"validatedRows1111")
   const handleFile = useCallback(async (file: File | undefined) => {
     if (!file) return;
     setParsing(true);
     setParseError(null);
     setParsed(null);
     setCurrentPage(1);
+    setValidatedRows(null);
+    setValidationError(null);
     try {
       const result = await parseFile(file);
       if (result.rows.length === 0) {
         setParseError("The file has no data rows.");
       } else {
         setParsed(result);
+        // Validate immediately after upload
+        setValidating(true);
+        setValidationError(null);
+        try {
+          const tableData: UploadPayloadItem[] = result.rows.map((row) => {
+            const item: UploadPayloadItem = {};
+            result.headers.forEach((header, index) => {
+              const value = row[index] ?? "";
+              item[header] = value;
+            });
+            return item;
+          });
+          const branch =
+            typeof window !== "undefined" ? (localStorage.getItem("branch") ?? "hyd") : "hyd";
+          const validateRes:any = await checkTermDetails(tableData, branch);
+          console.log(validateRes,"validateRes1111")
+          setValidatedRows(validateRes?.data);
+        } catch (err: unknown) {
+          setValidationError(err instanceof Error ? err.message : "Failed to validate file");
+          setValidatedRows(null);
+        } finally {
+          setValidating(false);
+        }
       }
     } catch (err: unknown) {
       setParseError(err instanceof Error ? err.message : "Failed to parse file");
@@ -87,33 +119,78 @@ export function UploadPageContent() {
   const clearFile = () => {
     setParsed(null);
     setParseError(null);
+    setValidatedRows(null);
+    setValidationError(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const buildTableData = useCallback((): UploadPayloadItem[] => {
+    if (!parsed) return [];
+    return parsed.rows.map((row) => {
+      const item: UploadPayloadItem = {};
+      parsed.headers.forEach((header, index) => {
+        const value = row[index] ?? "";
+        item[header] = value;
+      });
+      return item;
+    });
+  }, [parsed]);
+
+  const getBranch = () =>
+    typeof window !== "undefined" ? (localStorage.getItem("branch") ?? "hyd") : "hyd";
+
+  const handleValidate = async () => {
+    if (!parsed) return;
+    setValidating(true);
+    setValidationError(null);
+    try {
+      const tableData = buildTableData();
+      const branch = getBranch();
+      const result:any = await checkTermDetails(tableData, branch);
+      console.log(result,"result1111")
+      setValidatedRows(result?.data);
+    } catch (err: unknown) {
+      setValidationError(err instanceof Error ? err.message : "Failed to validate file");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const hasRowErrors = useMemo(() => {
+    if (!validatedRows) return true;
+    return validatedRows.some((r) => (r.message ?? "").trim() !== "Details are Valid");
+  }, [validatedRows]);
+
   const handleSubmit = async () => {
     if (!parsed) return;
+    if (!validatedRows) return; // must validate first
+    if (hasRowErrors) return; // fix errors first
     setSubmitting(true);
     try {
-      console.log("Submitting data:", { headers: parsed.headers, rows: parsed.rows });
-      // TODO: Call API to submit parsed data
+      const branch = getBranch();
+      const tableData = buildTableData();
+      console.log("Ready to submit:", { tableData, branch });
+      // TODO: call final import API here
     } finally {
       setSubmitting(false);
     }
   };
 
-  const totalPages = parsed ? Math.max(1, Math.ceil(parsed.rows.length / PAGE_SIZE)) : 1;
+  const totalCount = validatedRows?.length ?? parsed?.rows.length ?? 0;
+  const totalPages = totalCount ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : 1;
   const pageIndex = Math.min(currentPage, totalPages);
   const start = (pageIndex - 1) * PAGE_SIZE;
   const pageRows = parsed ? parsed.rows.slice(start, start + PAGE_SIZE) : [];
+  const pageValidated = validatedRows ? validatedRows.slice(start, start + PAGE_SIZE) : null;
 
   const paginationInfo: PaginationInfo = useMemo(
     () => ({
-      from: parsed && parsed.rows.length > 0 ? start + 1 : 0,
-      to: parsed ? Math.min(start + PAGE_SIZE, parsed.rows.length) : 0,
-      total: parsed?.rows.length ?? 0,
+      from: totalCount > 0 ? start + 1 : 0,
+      to: Math.min(start + PAGE_SIZE, totalCount),
+      total: totalCount,
       label: "records",
     }),
-    [parsed, start]
+    [start, totalCount]
   );
 
   return (
@@ -178,6 +255,41 @@ export function UploadPageContent() {
       {/* Parsed data table */}
       {parsed && (
         <>
+          {/* Validation status */}
+          {validationError && (
+            <div className="rounded-xl border px-5 py-4" style={{ backgroundColor: "var(--app-card-bg)", borderColor: "var(--app-danger)" }}>
+              <p className="text-sm" style={{ color: "var(--app-danger)" }}>{validationError}</p>
+            </div>
+          )}
+          {validatedRows && (
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-5 py-3"
+              style={{ backgroundColor: "var(--app-card-bg)", borderColor: "var(--app-divider)" }}
+            >
+              <p className="text-sm" style={{ color: "var(--app-text-secondary)" }}>
+                {hasRowErrors ? "Validation failed. Hover red rows to see the message." : "Validation successful. You can submit now."}
+              </p>
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold"
+                style={{
+                  backgroundColor: hasRowErrors ? "var(--app-danger-bg)" : "var(--app-success-bg)",
+                  color: hasRowErrors ? "var(--app-danger)" : "var(--app-success)",
+                }}
+              >
+                {hasRowErrors ? "Has Errors" : "All Good"}
+              </span>
+            </div>
+          )}
+          {validating && (
+            <div className="flex items-center gap-2 rounded-xl border px-5 py-4" style={{ backgroundColor: "var(--app-card-bg)", borderColor: "var(--app-divider)" }}>
+              <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" style={{ color: "var(--app-brand)" }}>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-sm" style={{ color: "var(--app-text-secondary)" }}>Validating file…</span>
+            </div>
+          )}
+
           {/* File info bar */}
           <div
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-5 py-3"
@@ -237,34 +349,91 @@ export function UploadPageContent() {
                       {h}
                     </th>
                   ))}
+                  <th
+                    className="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--app-text-secondary)" }}
+                  >
+                    Message
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((row, ri) => (
+                {(pageValidated ?? []).length > 0 ? (
+                  pageValidated!.map((vr, ri) => {
+                  const globalIndex = start + ri;
+                  const message = (vr.message ?? "").trim();
+                  const isValid = message === "Details are Valid";
+                  const hasError = !isValid;
+                  return (
                   <tr
-                    key={start + ri}
-                    className="border-b transition-colors hover:bg-[var(--app-nav-hover-bg)]"
-                    style={{ borderColor: "var(--app-divider)" }}
+                    key={globalIndex}
+                    className="border-b transition-colors"
+                    style={{
+                      borderColor: "var(--app-divider)",
+                      backgroundColor: hasError ? "rgba(248, 113, 113, 0.06)" : "transparent",
+                      cursor: hasError ? "help" : "default",
+                    }}
+                    title={hasError ? message : undefined}
                   >
                     <td className="whitespace-nowrap px-5 py-3 text-xs tabular-nums" style={{ color: "var(--app-text-secondary)" }}>
-                      {start + ri + 1}
+                      {globalIndex + 1}
                     </td>
-                    {row.map((cell, ci) => (
+                    {parsed.headers.map((h, ci) => {
+                      const cell = String(vr[h] ?? "");
+                      return (
                       <td
-                        key={ci}
+                        key={h}
                         className="max-w-[220px] truncate whitespace-nowrap px-5 py-3 text-sm"
                         style={{ color: "var(--app-text-primary)" }}
                         title={cell}
                       >
                         {cell || "—"}
                       </td>
-                    ))}
+                      );
+                    })}
+                    <td className="whitespace-nowrap px-5 py-3 text-xs font-semibold">
+                      <span
+                        className="inline-flex items-center rounded-full px-2.5 py-1"
+                        style={{
+                          backgroundColor: isValid ? "var(--app-success-bg)" : "var(--app-danger-bg)",
+                          color: isValid ? "var(--app-success)" : "var(--app-danger)",
+                        }}
+                      >
+                        {message || "—"}
+                      </span>
+                    </td>
                   </tr>
-                ))}
+                )})
+                ) : (
+                  pageRows.map((row, ri) => (
+                    <tr
+                      key={start + ri}
+                      className="border-b transition-colors hover:bg-[var(--app-nav-hover-bg)]"
+                      style={{ borderColor: "var(--app-divider)" }}
+                    >
+                      <td className="whitespace-nowrap px-5 py-3 text-xs tabular-nums" style={{ color: "var(--app-text-secondary)" }}>
+                        {start + ri + 1}
+                      </td>
+                      {row.map((cell, ci) => (
+                        <td
+                          key={ci}
+                          className="max-w-[220px] truncate whitespace-nowrap px-5 py-3 text-sm"
+                          style={{ color: "var(--app-text-primary)" }}
+                          title={cell}
+                        >
+                          {cell || "—"}
+                        </td>
+                      ))}
+                      <td className="whitespace-nowrap px-5 py-3 text-xs" style={{ color: "var(--app-text-secondary)" }}>
+                        —
+                      </td>
+                    </tr>
+                  ))
+                )}
                 {pageRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={parsed.headers.length + 1}
+                      colSpan={parsed.headers.length + 2}
                       className="px-5 py-12 text-center text-sm"
                       style={{ color: "var(--app-text-secondary)" }}
                     >
@@ -284,21 +453,40 @@ export function UploadPageContent() {
             <p className="text-sm" style={{ color: "var(--app-text-secondary)" }}>
               {parsed.rows.length} record{parsed.rows.length !== 1 ? "s" : ""} ready to import
             </p>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-6 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
-              style={{ backgroundColor: "var(--app-brand)" }}
-            >
-              {submitting && (
-                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              )}
-              {submitting ? "Submitting…" : "Submit"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleValidate}
+                disabled={validating || parsing}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-5 text-sm font-medium transition-colors hover:bg-[var(--app-nav-hover-bg)] disabled:opacity-60"
+                style={{ borderColor: "var(--app-divider)", color: "var(--app-text-primary)", backgroundColor: "var(--app-card-bg)" }}
+              >
+                {validating && (
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                {validating ? "Validating…" : validatedRows ? "Re-Validate" : "Validate"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting || !validatedRows || hasRowErrors}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-6 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+                style={{ backgroundColor: "var(--app-brand)" }}
+                title={!validatedRows ? "Validate the file before submitting" : hasRowErrors ? "Fix validation errors before submitting" : undefined}
+              >
+                {submitting && (
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                {submitting ? "Submitting…" : "Submit"}
+              </button>
+            </div>
           </div>
         </>
       )}

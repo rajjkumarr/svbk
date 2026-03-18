@@ -1,10 +1,25 @@
 "use client";
 
 import { useUi } from "@/context/ui-context";
+import { getNotifications } from "@/features/notifications/service/notification.service";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function Navbar() {
   const { toggleSidebar } = useUi();
+  const [notification,setNotification] =useState<any>()
+  let notifications:any
+  useEffect(()=>{
+ const fetchNotifications=async()=>{
 
+   const branch="hyd"
+   const role="Admin"
+   const response= await getNotifications(role,branch)
+   setNotification(response)
+  }
+  fetchNotifications()
+},[])
+console.log(notification,"mmnnnnnnnnnnn")
   return (
     <header
       className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-4 md:px-8 transition-[margin] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -50,6 +65,8 @@ export function Navbar() {
       </div>
 
       <nav className="flex items-center gap-3">
+        <Link href="/notifications">
+
         <button
           type="button"
           className="relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--app-nav-hover-bg)]"
@@ -63,9 +80,10 @@ export function Navbar() {
             className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--app-danger)] px-1 text-[10px] font-medium text-white"
             aria-hidden
           >
-            2
+            {notification?.notifications.length}
           </span>
         </button>
+        </Link>
         <button
           type="button"
           className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[var(--app-nav-hover-bg)]"

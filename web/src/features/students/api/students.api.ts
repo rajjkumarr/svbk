@@ -7,6 +7,8 @@ import { get, post } from "@/lib/api-client";
 import { API_ENDPOINTS } from "@/services/constants/endpoints";
 import type { GetStudentsDetailsResponse, StudentFeeRow, AcademicYearItem } from "@/features/students/types";
 
+type UploadValidationRow = Record<string, string>;
+
 export async function getStudentsDetailsByBranchApi(
   branch: string,
   academicYear: string
@@ -37,4 +39,9 @@ export async function getStudentByAdmissionApi(
 export async function createOrderApi(amount: number,admission: string,academicYear: string,receipt: string,currency: string): Promise<void> {
   const url = `${API_ENDPOINTS.studentsDetails.createOrder}`;
   return post<void>(url, { amount,ADMISSION:admission,academicYear,receipt,currency });
+}
+
+export async function checkTermDetailsApi(payload: { tableData: UploadValidationRow[]; branch: string }): Promise<UploadValidationRow[]> {
+  const url = `${API_ENDPOINTS.studentsDetails.checkTermDetails}`;
+  return post<UploadValidationRow[]>(url, payload);
 }
