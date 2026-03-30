@@ -25,7 +25,7 @@ API_ENDPOINTS = {
     getAdminNotifications:"/studentsDetails/getAdminNotifications"
   },
   templates: {
-    getTemplates: "/templates/getTemplates",
+    getTemplates: "/studentsDetails/getTemplateDetails",
     saveTemplate: "/templates/saveTemplate",
   },
 } as const;

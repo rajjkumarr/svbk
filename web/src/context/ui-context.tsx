@@ -18,6 +18,7 @@ const UiContext = createContext<UiContextValue | null>(null);
 
 export function UiProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpenState] = useState(false);
+  console.log(sidebarOpen,"sidebarOpen")
 
   const setSidebarOpen = useCallback((open: boolean) => {
     setSidebarOpenState(open);

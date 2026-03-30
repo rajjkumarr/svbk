@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/context";
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  console.log(pathname,"ppppp")
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {

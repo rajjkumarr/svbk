@@ -19,6 +19,7 @@ export function useLogin() {
     try {
       await login(credentials);
       const stored = getStoredToken();
+      console.log(stored,"storeddddddddddd")
       setToken(stored ?? "session");
       router.push("/dashboard");
     } catch (err) {

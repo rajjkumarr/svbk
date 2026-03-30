@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { PaymentPageContent } from "../payment/PaymentPageContent";
+import { PaymentPageContent } from "./PaymentPageContent";
 
 export const metadata: Metadata = {
   title: "Payment",

@@ -17,6 +17,7 @@ function readToken(): string | null {
 }
 
 function writeToken(token: string): void {
+  console.log(token, "tokennnnnnnnnnnn111")
   if (typeof window === "undefined") return;
   localStorage.setItem(TOKEN_KEY, token);
 }
@@ -49,12 +50,15 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
     password: credentials.password,
   };
   const res = await verifyLoginApi(body);
+  console.log(res, "ressssssssssss")
   const token =
     res.accessToken ??
     (res as { token?: string }).token ??
     (res as { data?: { accessToken?: string; token?: string } }).data?.accessToken ??
     (res as { data?: { accessToken?: string; token?: string } }).data?.token;
+    console.log(token, "tokennnnnnnnnnnn")
   if (authConfig.useTokenAuth && token) {
+    console.log(authConfig.useTokenAuth, "authConfig.useTokenAuth",token)
     writeToken(token);
   }
   return res;

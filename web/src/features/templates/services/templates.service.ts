@@ -9,13 +9,13 @@ function normalizeResponse(raw: unknown): Template[] {
   return [];
 }
 
-export async function getTemplates(): Promise<Template[]> {
-  const raw = await getTemplatesApi();
+export async function getTemplates(branch:any): Promise<Template[]> {
+  const raw = await getTemplatesApi(branch);
   return normalizeResponse(raw);
 }
 
 export async function getApprovedTemplates(): Promise<Template[]> {
-  const all = await getTemplates();
+  const all = await getTemplates({branch:"hyd"});
   return all.filter((t) => t.status === "approved");
 }
 

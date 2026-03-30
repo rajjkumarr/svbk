@@ -8,10 +8,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
 
-  const isLoginPage = pathname === "/";
-  const showAppShell = isAuthenticated || !isLoginPage;
 
-  if (!showAppShell) {
+  
+  const isLoginPage = pathname === "/";
+  const isPayNowPage = pathname === "/pay-now";
+   const hideShell =
+    isLoginPage ||
+    (isPayNowPage && !isAuthenticated);
+
+  if (hideShell) {
     return <>{children}</>;
   }
 

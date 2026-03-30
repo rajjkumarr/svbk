@@ -9,12 +9,14 @@ export function useFetchTemplates() {
   const [data, setData] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const branch = localStorage.getItem("branch") ? "hyd" : "hyd";
 
   const fetch = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const rows = await getTemplates();
+      const rows = await getTemplates(branch);
       setData(rows);
     } catch (err) {
       setError(getApiErrorMessage(err, "Failed to load templates"));

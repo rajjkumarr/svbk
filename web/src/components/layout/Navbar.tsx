@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 export function Navbar() {
   const { toggleSidebar } = useUi();
+  console.log(toggleSidebar,"toggleSidebar")
   const [notification,setNotification] =useState<any>()
   let notifications:any
   useEffect(()=>{
