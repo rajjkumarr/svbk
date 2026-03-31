@@ -8,23 +8,23 @@ import { setAuthTokenGetter } from "@/lib/api-client";
 import { authConfig } from "@/features/auth/config";
 import type { LoginCredentials, LoginResponse } from "@/features/auth/types";
 import { verifyLoginApi } from "@/features/auth/api/auth.api";
-
-const TOKEN_KEY = "auth_token";
+import {
+  STORAGE_KEY,
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+} from "@/storage";
 
 function readToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  return getStorageItem<string>(STORAGE_KEY.authToken);
 }
 
 function writeToken(token: string): void {
-  console.log(token, "tokennnnnnnnnnnn111")
-  if (typeof window === "undefined") return;
-  localStorage.setItem(TOKEN_KEY, token);
+  setStorageItem<string>(STORAGE_KEY.authToken, token);
 }
 
 function removeToken(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(TOKEN_KEY);
+  removeStorageItem(STORAGE_KEY.authToken);
 }
 
 if (authConfig.useTokenAuth) {
@@ -44,26 +44,50 @@ export function clearStoredToken(): void {
   removeToken();
 }
 
+export function getStoredUser(): LoginResponse["user"] | null {
+  return getStorageItem<LoginResponse["user"]>(STORAGE_KEY.userDetails);
+}
+
+export function setStoredUser(user: LoginResponse["user"] | null): void {
+  if (user) setStorageItem<LoginResponse["user"]>(STORAGE_KEY.userDetails, user);
+  else removeStorageItem(STORAGE_KEY.userDetails);
+}
+
+export function clearStoredUser(): void {
+  removeStorageItem(STORAGE_KEY.userDetails);
+}
+
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   const body = {
     email: credentials.email.trim(),
     password: credentials.password,
   };
-  const res = await verifyLoginApi(body);
+  const res:any = await verifyLoginApi(body);
   console.log(res, "ressssssssssss")
   const token =
     res.accessToken ??
     (res as { token?: string }).token ??
     (res as { data?: { accessToken?: string; token?: string } }).data?.accessToken ??
     (res as { data?: { accessToken?: string; token?: string } }).data?.token;
-    console.log(token, "tokennnnnnnnnnnn")
   if (authConfig.useTokenAuth && token) {
     console.log(authConfig.useTokenAuth, "authConfig.useTokenAuth",token)
     writeToken(token);
   }
+
+  if (res?.data) {
+    console.log(res.data, "1111111111")
+    setStoredUser(res.data);
+  }
+
   return res;
 }
 
 export async function logout(): Promise<void> {
-  removeToken();
+  clearStoredToken();
+  clearStoredUser();
 }
+
+
+// export async function logout(): Promise<void> {
+//   removeToken();
+// }

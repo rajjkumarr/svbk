@@ -4,4 +4,7 @@ export {
   getStoredToken,
   setStoredToken,
   clearStoredToken,
+  getStoredUser,
+  setStoredUser,
+  clearStoredUser,
 } from "./auth.service";

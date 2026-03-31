@@ -17,11 +17,17 @@ export function useLogin() {
     setError(null);
     setIsLoading(true);
     try {
-      await login(credentials);
+      const data:any=await login(credentials);
+     
       const stored = getStoredToken();
-      console.log(stored,"storeddddddddddd")
       setToken(stored ?? "session");
-      router.push("/dashboard");
+       if(data.data.role==="Admin"){
+        router.push("/tenants")
+        
+      }else{
+        router.push("/dashboard");
+      }
+      // router.push("/dashboard");
     } catch (err) {
       setError(getApiErrorMessage(err, "Login failed. Please try again."));
     } finally {
@@ -31,3 +37,7 @@ export function useLogin() {
 
   return { login: handleLogin, isLoading, error };
 }
+function setUser(arg0: { id: string; email: string; name?: string; } | null) {
+  throw new Error("Function not implemented.");
+}
+
