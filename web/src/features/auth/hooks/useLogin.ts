@@ -18,15 +18,16 @@ export function useLogin() {
     setIsLoading(true);
     try {
       const data:any=await login(credentials);
+      console.log(data,"$$$$$$$$$$$",data.data.role)
      
       const stored = getStoredToken();
       setToken(stored ?? "session");
-       if(data.data.role==="Admin"){
-        router.push("/tenants")
+      //  if(data.data.role==="Admin"){
+      //   router.push("/tenants")
         
-      }else{
-        router.push("/dashboard");
-      }
+      // }else{
+      //   router.push("/dashboard");
+      // }
       // router.push("/dashboard");
     } catch (err) {
       setError(getApiErrorMessage(err, "Login failed. Please try again."));

@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 
 export function Navbar() {
   const { toggleSidebar } = useUi();
-  console.log(toggleSidebar,"toggleSidebar")
   const [notification,setNotification] =useState<any>()
   let notifications:any
   useEffect(()=>{
@@ -20,7 +19,6 @@ export function Navbar() {
   }
   fetchNotifications()
 },[])
-console.log(notification,"mmnnnnnnnnnnn")
   return (
     <header
       className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-4 md:px-8 transition-[margin] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"

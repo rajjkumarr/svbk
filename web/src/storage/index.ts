@@ -1,6 +1,6 @@
 export const STORAGE_KEY = Object.freeze({
   authToken: "auth_token",
-  userDetails: "user_details",
+  userDetails: "userDetails",
   // add more shared keys here as needed.
 });
 

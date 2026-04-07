@@ -1,86 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { Modal } from  "@/components/common/Modal";
+import { Modal } from "@/components/common/Modal";
 import TenantCard from "./TenantCard";
-
-type Tenant = {
-  id: string;
-  schoolName: string;
-  schoolCode: string;
-  tenantCode: string;
-  campusName: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-};
-
-const initialTenants: Tenant[] = [
-  {
-    id: "t1",
-    schoolName: "Sunrise High School",
-    schoolCode: "SHS001",
-    tenantCode: "TNT001",
-    campusName: "Main Campus",
-    address: "201 East Maple Street",
-    city: "Springfield",
-    state: "Illinois",
-    country: "USA",
-  },
-  {
-    id: "t2",
-    schoolName: "Green Valley Academy",
-    schoolCode: "GVA002",
-    tenantCode: "TNT002",
-    campusName: "North Campus",
-    address: "88 Oak Avenue",
-    city: "Franklin",
-    state: "Tennessee",
-    country: "USA",
-  },
-  {
-    id: "t3",
-    schoolName: "Riverstone School",
-    schoolCode: "RS003",
-    tenantCode: "TNT003",
-    campusName: "River Campus",
-    address: "456 Riverbend Drive",
-    city: "Madison",
-    state: "Wisconsin",
-    country: "USA",
-  },
-  {
-    id: "t4",
-    schoolName: "Everest International",
-    schoolCode: "EI004",
-    tenantCode: "TNT004",
-    campusName: "International Campus",
-    address: "121 Summit Road",
-    city: "Denver",
-    state: "Colorado",
-    country: "USA",
-  },
-  {
-    id: "t5",
-    schoolName: "Pinecrest Institute",
-    schoolCode: "PI005",
-    tenantCode: "TNT005",
-    campusName: "Pine Campus",
-    address: "777 Redwood Street",
-    city: "Portland",
-    state: "Oregon",
-    country: "USA",
-  },
-];
+import { Tenant, initialTenants } from "@/features/tenants/tenantData";
+import { getStorageItem } from "@/storage";
 
 const generateUniqueId = () => `t${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
 
 function TenantManagement() {
+  const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("All");
@@ -90,6 +24,9 @@ function TenantManagement() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const pageSize = 8;
+
+  const data = getStorageItem("userDetails")
+  console.log(data,"vvvvvvvvvvvv")
 
   const [formData, setFormData] = useState<Omit<Tenant, "id">>({
     schoolName: "",
@@ -184,6 +121,7 @@ function TenantManagement() {
 
   const onCardSelect = (id: string) => {
     setSelectedId(id);
+    router.push(`/tenants/${id}`);
   };
 
   return (

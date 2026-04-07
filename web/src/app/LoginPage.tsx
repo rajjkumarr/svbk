@@ -5,16 +5,25 @@ import { useRouter } from "next/navigation";
 import { AppImage } from "@/components/ui";
 import { LoginForm } from "@/features/auth";
 import { useAuth } from "@/features/auth";
+import { getStorageItem } from "@/storage";
+
 
 const LOGO_SRC = "/svbk_logo.webp";
 
 export function LoginPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-
+  
+ const data:any = getStorageItem("userDetails")
+  console.log(data,"qqqqq")
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/dashboard");
+    if (isAuthenticated ) {
+      if(data?.role==="Admin"){
+        router.replace("/tenants")
+      }else{
+
+        router.replace("/dashboard");
+      }
     }
   }, [isAuthenticated, router]);
 

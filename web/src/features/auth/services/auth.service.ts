@@ -63,7 +63,6 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
     password: credentials.password,
   };
   const res:any = await verifyLoginApi(body);
-  console.log(res, "ressssssssssss")
   const token =
     res.accessToken ??
     (res as { token?: string }).token ??
@@ -75,7 +74,6 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   }
 
   if (res?.data) {
-    console.log(res.data, "1111111111")
     setStoredUser(res.data);
   }
 

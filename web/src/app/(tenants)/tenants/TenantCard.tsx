@@ -1,15 +1,5 @@
 
-type Tenant = {
-  id: string;
-  schoolName: string;
-  schoolCode: string;
-  tenantCode: string;
-  campusName: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-};
+import { Tenant } from "@/features/tenants/tenantData";
 
 function TenantCard({
   tenant,

@@ -12,10 +12,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   
   const isLoginPage = pathname === "/";
   const isPayNowPage = pathname === "/pay-now";
-   const hideShell =
-    isLoginPage ||
-    (isPayNowPage && !isAuthenticated);
-
+  const isTenantsPage = pathname.includes("/tenants");
+  const hideShell =
+  isTenantsPage||
+  isLoginPage ||
+  (isPayNowPage && !isAuthenticated);
+  console.log(hideShell,"hide shell")
+  console.log(isLoginPage,isPayNowPage,isTenantsPage,"$$$$$$$$$$$",hideShell)
   if (hideShell) {
     return <>{children}</>;
   }
