@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/common/Modal";
-import TenantCard from "./TenantCard";
+// import TenantCard from "./TenantCard";
 import { Tenant, initialTenants } from "@/features/tenants/tenantData";
 import { getStorageItem } from "@/storage";
+import { TenantCard } from "@/components/common/TenantCard/TenantCard";
+import { TenantCardContent, TenantCardField, TenantCardHeader } from "@/components/common";
 
 const generateUniqueId = () => `t${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
@@ -26,7 +28,6 @@ function TenantManagement() {
   const pageSize = 8;
 
   const data = getStorageItem("userDetails")
-  console.log(data,"vvvvvvvvvvvv")
 
   const [formData, setFormData] = useState<Omit<Tenant, "id">>({
     schoolName: "",
@@ -219,10 +220,22 @@ function TenantManagement() {
             {paginatedTenants.map((tenant) => (
               <TenantCard
                 key={tenant.id}
-                tenant={tenant}
+                // tenant={tenant}
                 isSelected={selectedId === tenant.id}
                 onClick={() => onCardSelect(tenant.id)}
-              />
+              >
+                <TenantCardHeader
+                  title={tenant.schoolName}
+                  subtitle={tenant.campusName}
+                  showCheckmark={selectedId === tenant.id}
+                />
+                <TenantCardContent>
+                  <TenantCardField label="School Code" value={tenant.schoolCode} size="sm" />
+                  <TenantCardField label="Tenant Code" value={tenant.tenantCode} size="sm" />
+                  <TenantCardField label="Location" value={`${tenant.city}, ${tenant.state}`} size="sm" />
+                </TenantCardContent>
+
+              </TenantCard>
             ))}
           </div>
 
