@@ -28,6 +28,11 @@ API_ENDPOINTS = {
     getTemplates: "/studentsDetails/getTemplateDetails",
     saveTemplate: "/templates/saveTemplate",
   },
+  tenants: {
+    saveTenant: "api/tenants/save",
+    getTenants: "api/tenants/get-tenant",
+    getTenantById: "api/tenants/get-tenant",  // usage: /api/tenants/get-tenant/:id
+  },
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;

@@ -7,23 +7,24 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/common/Modal";
 // import TenantCard from "./TenantCard";
-import { Tenant, initialTenants } from "@/features/tenants/tenantData";
+import { Tenant } from "@/features/tenants/tenantData";
+import { getTenants, saveTenant } from "@/features/tenants/services/tenants.service";
 import { getStorageItem } from "@/storage";
 import { TenantCard } from "@/components/common/TenantCard/TenantCard";
 import { TenantCardContent, TenantCardField, TenantCardHeader } from "@/components/common";
 
-const generateUniqueId = () => `t${Date.now()}${Math.floor(Math.random() * 1000)}`;
-
 
 function TenantManagement() {
   const router = useRouter();
-  const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("All");
   const [filterState, setFilterState] = useState("All");
-  const [selectedId, setSelectedId] = useState<string>(initialTenants[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
@@ -33,7 +34,7 @@ function TenantManagement() {
     schoolName: "",
     schoolCode: "",
     tenantCode: "",
-    campusName: "",
+    tenantName: "",
     address: "",
     city: "",
     state: "",
@@ -43,8 +44,18 @@ function TenantManagement() {
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof Omit<Tenant, "id">, string>>>({});
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 800);
-    return () => window.clearTimeout(timer);
+    let cancelled = false;
+    setLoading(true);
+    getTenants()
+      .then((data) => {
+        if (cancelled) return;
+        setTenants(data);
+        setSelectedId(data[0]?.id ?? "");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const cities = useMemo(() => ["All", ...Array.from(new Set(tenants.map((t) => t.city))).sort()], [tenants]);
@@ -77,13 +88,14 @@ function TenantManagement() {
       schoolName: "",
       schoolCode: "",
       tenantCode: "",
-      campusName: "",
+      tenantName: "",
       address: "",
       city: "",
       state: "",
       country: "",
     });
     setFormErrors({});
+    setSaveError("");
   };
 
   const validate = () => {
@@ -99,19 +111,27 @@ function TenantManagement() {
     return Object.keys(errors).length === 0;
   };
 
-  const onSaveTenant = () => {
+  const onSaveTenant = async () => {
     if (!validate()) return;
 
-    const newTenant: Tenant = {
-      id: generateUniqueId(),
-      ...formData,
-    };
+    setSaving(true);
+    setSaveError("");
 
-    setTenants((prev) => [newTenant, ...prev]);
-    setDrawerOpen(false);
-    setSelectedId(newTenant.id);
-    resetForm();
-    setPage(1);
+    try {
+      const newTenant = await saveTenant(formData);
+
+      // Re-fetch the full list from the server so local state is in sync
+      const refreshed = await getTenants();
+      setTenants(refreshed);
+      setDrawerOpen(false);
+      setSelectedId(newTenant.id);
+      resetForm();
+      setPage(1);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save tenant. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const onOpenDrawer = () => {
@@ -226,7 +246,7 @@ function TenantManagement() {
               >
                 <TenantCardHeader
                   title={tenant.schoolName}
-                  subtitle={tenant.campusName}
+                  subtitle={tenant.tenantName}
                   showCheckmark={selectedId === tenant.id}
                 />
                 <TenantCardContent>
@@ -306,9 +326,9 @@ function TenantManagement() {
               />
               <Input
                 label="Campus / Tenant Name *"
-                value={formData.campusName}
-                onChange={(e) => setFormData({ ...formData, campusName: e.target.value })}
-                error={formErrors.campusName}
+                value={formData.tenantName}
+                onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
+                error={formErrors.tenantName}
                 fullWidth
               />
               <div className="sm:col-span-2">
@@ -345,12 +365,14 @@ function TenantManagement() {
           </div>
 
           <div className="sticky bottom-0 z-10 border-t border-zinc-200 bg-[var(--app-card-bg)] p-4">
+            {saveError && (
+              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{saveError}</p>
+            )}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setDrawerOpen(false);
-                }}
+                onClick={() => setDrawerOpen(false)}
+                disabled={saving}
                 fullWidth
                 className="sm:w-auto"
               >
@@ -359,10 +381,12 @@ function TenantManagement() {
               <Button
                 variant="primary"
                 onClick={onSaveTenant}
+                isLoading={saving}
+                disabled={saving}
                 fullWidth
                 className="sm:w-auto"
               >
-                Save Tenant
+                {saving ? "Saving..." : "Save Tenant"}
               </Button>
             </div>
           </div>

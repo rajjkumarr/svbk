@@ -14,7 +14,7 @@ export default function TenantDetailsTab({ tenant }: TenantDetailsTabProps) {
           <KeyValueField label="School Name" value={tenant.schoolName} />
           <KeyValueField label="School Code" value={tenant.schoolCode} />
           <KeyValueField label="Tenant Code" value={tenant.tenantCode} />
-          <KeyValueField label="Campus" value={tenant.campusName} />
+          <KeyValueField label="Campus" value={tenant.tenantName} />
         </div>
       </Card>
 

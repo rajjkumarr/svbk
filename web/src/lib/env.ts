@@ -2,7 +2,7 @@
  * Environment helpers. Next.js exposes NEXT_PUBLIC_* to the client.
  */
 
-const DEFAULT_API_BASE_URL = "http://localhost:5000";
+const DEFAULT_API_BASE_URL = "http://localhost:3001";
 
 function getEnv(key: string): string {
   if (typeof process === "undefined") return "";

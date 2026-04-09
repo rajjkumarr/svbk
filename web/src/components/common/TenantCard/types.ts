@@ -1,8 +1,10 @@
+import type { ReactNode } from "react";
+
 export interface TenantCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export interface TenantCardHeaderProps {
@@ -13,7 +15,7 @@ export interface TenantCardHeaderProps {
 }
 
 export interface TenantCardContentProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }
 

@@ -3,7 +3,7 @@ export type Tenant = {
   schoolName: string;
   schoolCode: string;
   tenantCode: string;
-  campusName: string;
+  tenantName: string;
   address: string;
   city: string;
   state: string;
@@ -16,7 +16,7 @@ export const initialTenants: Tenant[] = [
     schoolName: "Sunrise High School",
     schoolCode: "SHS001",
     tenantCode: "TNT001",
-    campusName: "Main Campus",
+    tenantName: "Main Campus",
     address: "201 East Maple Street",
     city: "Springfield",
     state: "Illinois",
@@ -27,7 +27,7 @@ export const initialTenants: Tenant[] = [
     schoolName: "Green Valley Academy",
     schoolCode: "GVA002",
     tenantCode: "TNT002",
-    campusName: "North Campus",
+    tenantName: "North Campus",
     address: "88 Oak Avenue",
     city: "Franklin",
     state: "Tennessee",
@@ -38,7 +38,7 @@ export const initialTenants: Tenant[] = [
     schoolName: "Riverstone School",
     schoolCode: "RS003",
     tenantCode: "TNT003",
-    campusName: "River Campus",
+    tenantName: "River Campus",
     address: "456 Riverbend Drive",
     city: "Madison",
     state: "Wisconsin",
@@ -49,7 +49,7 @@ export const initialTenants: Tenant[] = [
     schoolName: "Everest International",
     schoolCode: "EI004",
     tenantCode: "TNT004",
-    campusName: "International Campus",
+    tenantName: "International Campus",
     address: "121 Summit Road",
     city: "Denver",
     state: "Colorado",
@@ -60,7 +60,7 @@ export const initialTenants: Tenant[] = [
     schoolName: "Pinecrest Institute",
     schoolCode: "PI005",
     tenantCode: "TNT005",
-    campusName: "Pine Campus",
+    tenantName: "Pine Campus",
     address: "777 Redwood Street",
     city: "Portland",
     state: "Oregon",

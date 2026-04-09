@@ -26,7 +26,7 @@ function TenantCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-lg font-semibold text-[var(--app-text-primary)]">{tenant.schoolName}</p>
-          <p className="mt-1 text-sm text-[var(--app-text-secondary)]">{tenant.campusName}</p>
+          <p className="mt-1 text-sm text-[var(--app-text-secondary)]">{tenant.tenantName}</p>
         </div>
         {isSelected && (
           <span
