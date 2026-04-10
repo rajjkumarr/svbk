@@ -580,40 +580,20 @@ export default function TenantDetailsPage() {
                 }`}
               >
                 <option value="">Select role</option>
-                <option value="Super Admin">Super Admin</option>
-                <option value="Finance Admin">Finance Admin</option>
-                <option value="Principal">Principal</option>
-                <option value="Operations Admin">Operations Admin</option>
-                <option value="IT Admin">IT Admin</option>
+                <option value="Admin">Admin</option>
               </select>
               {adminErrors.role && (
                 <p className="text-sm text-red-600">{adminErrors.role}</p>
               )}
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Branch <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={newAdmin.branch}
-                onChange={(e) => updateAdmin({ branch: e.target.value })}
-                className={`h-11 rounded-lg border bg-transparent px-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
-                  adminErrors.branch
-                    ? "border-red-500 focus:ring-red-500/20"
-                    : "border-zinc-300 dark:border-zinc-600"
-                }`}
-              >
-                <option value="">Select branch</option>
-                <option value="Main Campus">Main Campus</option>
-                <option value="North Branch">North Branch</option>
-                <option value="South Branch">South Branch</option>
-                <option value="East Branch">East Branch</option>
-                <option value="West Branch">West Branch</option>
-              </select>
-              {adminErrors.branch && (
-                <p className="text-sm text-red-600">{adminErrors.branch}</p>
-              )}
-            </div>
+            <Input
+              label="Branch *"
+              placeholder="e.g. Main Campus"
+              value={newAdmin.branch}
+              onChange={(e) => updateAdmin({ branch: e.target.value })}
+              error={adminErrors.branch}
+              fullWidth
+            />
           </div>
 
           {adminSuccess && (
